@@ -1,0 +1,26 @@
+Este proyecto combina **Maven** para la construcción y **Docker Compose** para el despliegue de la aplicación.
+
+---
+
+## 🚀 Instrucciones de ejecución
+
+1. **Nota: tener docker desktop abierto**
+2. **Ingresar a productos-ms a la carpeta deploy**
+3. **Abrir consola cmd bash en la carpeta deploy**
+4. **Levantar los contenedores con Docker Compose example producto-ms/deploy docker compose up --build**
+   docker compose up --build
+5. **Nota esperar a que el contenedor de Prodcutos-ms para ingresar a inventario-ms a la carpeta deploy**
+6. **Abrir consola cmd bash en la carpeta deploy**
+7. **Levantar los contenedores con Docker Compose example inventario-ms/deploy docker compose up --build**
+   docker compose up --build
+
+8. **http://localhost:8080/producto-ms/swagger-ui/index.html#**
+9. **http://localhost:8090/inventario-sm/swagger-ui/index.html#**
+
+10. **keySecret colocar en el swagger para cosumir servicio**
+    super-secret-key
+11. **para levantar el fronts esperar a que esten arriba los dos contenedores**
+12. **Abrir consola cmd bash en la carpeta raiz y ejecutar este comando**
+
+ng serve --proxy-config proxy.conf.json
+
