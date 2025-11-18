@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: productos_db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=productos_db
+    ports:
+      - "5434:5432"  # Host:Contenedor
+    volumes:
+      - productos_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  producto-ms:
+    build:
+      context: ..
+    container_name: producto_ms
+    ports:
+      - "8080:8080"
+    environment:
+      # Conexión a Postgres DENTRO de Docker
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=productos_db
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+
+      # Otras variables
+      - API_KEY=${API_KEY:-super-secret-key}
+      - SERVER_PORT=${SERVER_PORT:-8080}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - UPLOAD_DIR=/uploads
+    depends_on:
+      - db
+    volumes:
+      - ./uploads:/uploads
+
+volumes:
+  productos_data:

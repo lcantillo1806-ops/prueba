@@ -1,0 +1,1 @@
+{"ast":null,"code":"export const environment = {\n  production: false,\n  apiBaseUrl: 'http://192.168.1.6:8080/producto-ms/api',\n  useMockApi: true\n};","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}

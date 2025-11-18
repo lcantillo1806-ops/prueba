@@ -1,0 +1,1 @@
+{"ast":null,"code":"export class microserviciosConfig {\n  /**\n  * @description: Url end-point base\n  */\n  static productoMS() {\n    const microServicio = {\n      route: 'producto-ms/pagaduria/api/productos'\n    };\n    return microServicio;\n  }\n}","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}

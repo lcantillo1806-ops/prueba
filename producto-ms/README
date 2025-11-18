@@ -1,0 +1,15 @@
+Este proyecto combina **Maven** para la construcción y **Docker Compose** para el despliegue de la aplicación.
+
+---
+
+## 🚀 Instrucciones de ejecución
+
+1. **Nota: tener docker desktop abierto**
+3. **Levantar los contenedores con Docker Compose**
+   docker compose up --build
+4. **http://localhost:8080/producto-ms/swagger-ui/index.html#**
+
+5. **keySecret colocar en el swagger para cosumir servicio**
+    super-secret-key
+
+

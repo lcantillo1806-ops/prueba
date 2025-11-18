@@ -1,0 +1,1 @@
+{"ast":null,"code":"export const environment = {\n  production: false,\n  apiBaseUrl: 'http://localhost:3000',\n  useMockApi: true // ⬅️ en prod sí se usa backend real\n};","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}

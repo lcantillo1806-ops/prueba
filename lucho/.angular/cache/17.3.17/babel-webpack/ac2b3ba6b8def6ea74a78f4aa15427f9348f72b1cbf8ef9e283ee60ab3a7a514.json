@@ -1,0 +1,1 @@
+{"ast":null,"code":"export const AuthInterceptor = (req, next) => {\n  const cloned = req.clone({\n    setHeaders: {\n      'X-API-KEY': 'super-secret-key'\n    }\n  });\n  return next(cloned);\n};","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}

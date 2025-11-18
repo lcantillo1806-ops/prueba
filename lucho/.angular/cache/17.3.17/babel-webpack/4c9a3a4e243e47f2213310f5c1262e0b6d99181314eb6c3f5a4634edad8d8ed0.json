@@ -1,0 +1,1 @@
+{"ast":null,"code":"export const MOCK_INVENTORY = [{\n  productId: '1',\n  availableQuantity: 10\n}, {\n  productId: '2',\n  availableQuantity: 5\n}, {\n  productId: '3',\n  availableQuantity: 3\n}];","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}
