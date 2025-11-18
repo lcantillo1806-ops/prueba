@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: producto-ms
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  web:
+    resources:
+      add-mappings: true
+
+security:
+  api-key: ${API_KEY}
+
+server:
+  port: ${SERVER_PORT}
+  servlet:
+    context-path: /producto-ms
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  swagger:
+    title: Productos MS
+    description: >
+      El microservicio Productos MS se encarga de la gestión integral del catálogo de productos
+      dentro de una arquitectura basada en microservicios. Su objetivo principal es centralizar
+      y exponer la información de los productos de manera eficiente, segura y escalable,
+      facilitando la interacción con otros servicios del ecosistema.
+    version: 1.0.0
+  upload:
+    dir: ${UPLOAD_DIR}

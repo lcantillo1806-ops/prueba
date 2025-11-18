@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventarioController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inventario-ms</a> &gt; <a href="index.source.html" class="el_package">com.ms.producto_ms.controller</a> &gt; <span class="el_source">InventarioController.java</span></div><h1>InventarioController.java</h1><pre class="source lang-java linenums">package com.ms.producto_ms.controller;
+
+import com.ms.producto_ms.dto.request.MovimientoInventarioRequest;
+import com.ms.producto_ms.dto.response.ApiResponse;
+import com.ms.producto_ms.dto.response.InventarioDetalleResponse;
+import com.ms.producto_ms.exception.CustomException;
+import com.ms.producto_ms.mapper.ProductoMapper;
+import com.ms.producto_ms.service.InventarioInterface;
+import com.ms.producto_ms.util.UtilService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+
+<span class="fc" id="L24">@Slf4j</span>
+@CrossOrigin(allowedHeaders = &quot;*&quot;, origins = &quot;*&quot;)
+@RestController
+@RequestMapping(value = &quot;/api/inventarios/productos&quot;)
+@AllArgsConstructor
+@Tag(name = &quot;Productos Resource&quot;,
+        description = &quot;Se encarga de exponer los endpoints del microservicio Productos MS, gestionando operaciones CRUD sobre el catálogo de productos. Recibe solicitudes HTTP, valida datos, delega la lógica al servicio de productos y devuelve respuestas estructuradas con códigos adecuados.&quot;)
+public class InventarioController extends BaseController {
+
+    private final InventarioInterface inventarioInterface;
+
+    // ====== CONSULTAR DETALLE ======
+    @Operation(
+            summary = &quot;Obtener detalle de inventario por producto&quot;,
+            description = &quot;Devuelve el nombre del producto, la cantidad disponible, el precio unitario y el valor total.&quot;
+    )
+    @GetMapping(value = &quot;/{productoId}&quot;, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity&lt;ApiResponse&gt; getDetalle(
+            @Parameter(description = &quot;ID del producto&quot;, required = true, example = &quot;1&quot;)
+            @PathVariable Long productoId
+    ) throws CustomException {
+
+<span class="fc" id="L46">        InventarioDetalleResponse detalle = inventarioInterface.consultarDetalleInventario(productoId);</span>
+
+<span class="fc" id="L48">        ApiResponse response = ApiResponse.builder()</span>
+<span class="fc" id="L49">                .code(HttpStatus.OK.value())</span>
+<span class="fc" id="L50">                .message(&quot;Detalle de inventario consultado correctamente.&quot;)</span>
+<span class="fc" id="L51">                .data(detalle)</span>
+<span class="fc" id="L52">                .jsonapi(Map.of(&quot;version&quot;, &quot;1.0&quot;))</span>
+<span class="fc" id="L53">                .build();</span>
+
+
+<span class="fc" id="L56">        return ResponseEntity.ok(response);</span>
+    }
+
+    // ====== INGRESO ======
+    @Operation(
+            summary = &quot;Registrar ingreso de inventario&quot;,
+            description = &quot;Registra un movimiento de INGRESO y devuelve la nueva cantidad disponible.&quot;
+    )
+    @PostMapping(value = &quot;/{productoId}/ingreso&quot;, consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity&lt;ApiResponse&gt; ingresar(
+            @PathVariable Long productoId,
+            @RequestBody @Valid MovimientoInventarioRequest body
+    ) throws CustomException {
+
+<span class="fc" id="L71">        int nuevaCantidad = inventarioInterface.agregarCantidad(productoId, body.getCantidad(), body.getPrecioUnitario());</span>
+
+<span class="fc" id="L73">        ApiResponse response = ApiResponse.builder()</span>
+<span class="fc" id="L74">                .code(HttpStatus.OK.value())</span>
+<span class="fc" id="L75">                .message(&quot;Ingreso registrado correctamente.&quot;)</span>
+<span class="fc" id="L76">                .data(Map.of(</span>
+                        &quot;productoId&quot;, productoId,
+<span class="fc" id="L78">                        &quot;cantidadNueva&quot;, nuevaCantidad</span>
+                ))
+<span class="fc" id="L80">                .jsonapi(Map.of(&quot;version&quot;, &quot;1.0&quot;))</span>
+<span class="fc" id="L81">                .build();</span>
+
+<span class="fc" id="L83">        return ResponseEntity.ok(response);</span>
+    }
+
+    // ====== SALIDA ======
+    @Operation(
+            summary = &quot;Registrar salida de inventario&quot;,
+            description = &quot;Registra un movimiento de SALIDA y devuelve la nueva cantidad disponible.&quot;
+    )
+    @PostMapping(value = &quot;/{productoId}/salida&quot;, consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity&lt;ApiResponse&gt; retirar(
+            @PathVariable Long productoId,
+            @RequestBody @Valid MovimientoInventarioRequest body
+    ) throws CustomException {
+
+<span class="fc" id="L98">        int nuevaCantidad = inventarioInterface.retirarCantidad(productoId, body.getCantidad(), body.getPrecioUnitario());</span>
+
+<span class="fc" id="L100">        ApiResponse response = ApiResponse.builder()</span>
+<span class="fc" id="L101">                .code(HttpStatus.OK.value())</span>
+<span class="fc" id="L102">                .message(&quot;Salida registrada correctamente.&quot;)</span>
+<span class="fc" id="L103">                .data(Map.of(</span>
+                        &quot;productoId&quot;, productoId,
+<span class="fc" id="L105">                        &quot;cantidadNueva&quot;, nuevaCantidad</span>
+                ))
+<span class="fc" id="L107">                .jsonapi(Map.of(&quot;version&quot;, &quot;1.0&quot;))</span>
+<span class="fc" id="L108">                .build();</span>
+
+<span class="fc" id="L110">        return ResponseEntity.ok(response);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

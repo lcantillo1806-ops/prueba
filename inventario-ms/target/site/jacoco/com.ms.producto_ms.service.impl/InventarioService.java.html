@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventarioService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inventario-ms</a> &gt; <a href="index.source.html" class="el_package">com.ms.producto_ms.service.impl</a> &gt; <span class="el_source">InventarioService.java</span></div><h1>InventarioService.java</h1><pre class="source lang-java linenums">package com.ms.producto_ms.service.impl;
+
+import com.ms.producto_ms.client.ProductosClient;
+import com.ms.producto_ms.dto.response.ApiResponse;
+import com.ms.producto_ms.dto.response.InventarioDetalleResponse;
+import com.ms.producto_ms.dto.response.ProductoResumenDto;
+import com.ms.producto_ms.entity.InventarioEntity;
+import com.ms.producto_ms.exception.CustomException;
+import com.ms.producto_ms.repository.InventarioRepository;
+import com.ms.producto_ms.service.InventarioInterface;
+import com.ms.producto_ms.util.eventos.InventarioCambiadoEvent;
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+
+/**
+ * Interfaz que define las operaciones de negocio relacionadas con la entidad {@link InventarioEntity}.
+ * &lt;p&gt;
+ * Esta interfaz establece el contrato para la gestión de productos en el sistema,
+ * incluyendo creación, consulta, actualización y eliminación. Las implementaciones
+ * concretas deben encargarse de la lógica de negocio y la interacción con el repositorio.
+ *
+ * @author Luis Cantillo
+ * @since 1.0.0
+ */
+<span class="fc" id="L37">@Slf4j</span>
+@RequiredArgsConstructor
+@Service
+public class InventarioService implements InventarioInterface {
+
+    private final InventarioRepository inventarioRepository;
+    private final ProductosClient productosClient;
+    private final ApplicationEventPublisher eventPublisher;
+
+    // ====== INGRESO ======
+    @Override
+    @Transactional
+    public int agregarCantidad(Long productoId, Integer cantidad, BigDecimal precioUnitario) throws CustomException {
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (productoId == null) {</span>
+<span class="nc" id="L51">            throw new CustomException(&quot;El ID del producto es obligatorio&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+<span class="pc bpc" id="L53" title="2 of 4 branches missed.">        if (cantidad == null || cantidad &lt;= 0) {</span>
+<span class="nc" id="L54">            throw new CustomException(&quot;La cantidad a agregar debe ser mayor que 0&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+<span class="pc bpc" id="L56" title="2 of 4 branches missed.">        if (precioUnitario == null || precioUnitario.compareTo(BigDecimal.ZERO) &lt;= 0) {</span>
+<span class="nc" id="L57">            throw new CustomException(&quot;El precio unitario debe ser mayor que 0&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+        // Válida y trae datos básicos del producto
+<span class="fc" id="L61">        ProductoResumenDto producto = obtenerProducto(productoId);</span>
+
+<span class="fc" id="L63">        int cantidadAnterior = inventarioRepository.obtenerSaldoPorProducto(productoId);</span>
+
+<span class="fc" id="L65">        BigDecimal precioTotal = precioUnitario.multiply(BigDecimal.valueOf(cantidad));</span>
+
+<span class="fc" id="L67">        InventarioEntity movimiento = InventarioEntity.builder()</span>
+<span class="fc" id="L68">                .productoId(productoId)</span>
+<span class="fc" id="L69">                .cantidad(cantidad)</span>
+<span class="fc" id="L70">                .tipoMovimiento(&quot;INGRESO&quot;)</span>
+<span class="fc" id="L71">                .precioUnitario(precioUnitario)</span>
+<span class="fc" id="L72">                .precioTotal(precioTotal)</span>
+<span class="fc" id="L73">                .build();</span>
+
+<span class="fc" id="L75">        inventarioRepository.save(movimiento);</span>
+
+<span class="fc" id="L77">        int cantidadNueva = cantidadAnterior + cantidad;</span>
+
+<span class="fc" id="L79">        log.info(&quot;Inventario INGRESO - productoId={} nombre={} cantAnterior={} mov={} cantNueva={} precioUnit={} precioTotal={}&quot;,</span>
+<span class="fc" id="L80">                productoId, producto.getNombre(), cantidadAnterior, cantidad, cantidadNueva, precioUnitario, precioTotal);</span>
+
+
+        // Emitir evento de inventario cambiado
+<span class="fc" id="L84">        InventarioCambiadoEvent event = InventarioCambiadoEvent.builder()</span>
+<span class="fc" id="L85">                .productoId(productoId)</span>
+<span class="fc" id="L86">                .tipoMovimiento(&quot;INGRESO&quot;)</span>
+<span class="fc" id="L87">                .cantidadAnterior(cantidadAnterior)</span>
+<span class="fc" id="L88">                .cantidadMovimiento(cantidad)</span>
+<span class="fc" id="L89">                .cantidadNueva(cantidadNueva)</span>
+<span class="fc" id="L90">                .precioUnitario(precioUnitario)</span>
+<span class="fc" id="L91">                .build();</span>
+
+<span class="fc" id="L93">        eventPublisher.publishEvent(event);</span>
+
+<span class="fc" id="L95">        return cantidadNueva;</span>
+    }
+
+    // ====== SALIDA ======
+    @Override
+    @Transactional
+    public int retirarCantidad(Long productoId, Integer cantidad, BigDecimal precioUnitario) throws CustomException {
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (productoId == null) {</span>
+<span class="nc" id="L103">            throw new CustomException(&quot;El ID del producto es obligatorio&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+<span class="pc bpc" id="L105" title="2 of 4 branches missed.">        if (cantidad == null || cantidad &lt;= 0) {</span>
+<span class="nc" id="L106">            throw new CustomException(&quot;La cantidad a retirar debe ser mayor que 0&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+<span class="pc bpc" id="L108" title="2 of 4 branches missed.">        if (precioUnitario == null || precioUnitario.compareTo(BigDecimal.ZERO) &lt;= 0) {</span>
+<span class="nc" id="L109">            throw new CustomException(&quot;El precio unitario debe ser mayor que 0&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+<span class="fc" id="L112">        ProductoResumenDto producto = obtenerProducto(productoId);</span>
+
+<span class="fc" id="L114">        int cantidadAnterior = inventarioRepository.obtenerSaldoPorProducto(productoId);</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        if (cantidadAnterior &lt; cantidad) {</span>
+<span class="nc" id="L116">            throw new CustomException(&quot;No hay inventario suficiente para este producto&quot;, HttpStatus.BAD_REQUEST);</span>
+        }
+
+<span class="fc" id="L119">        BigDecimal precioTotal = precioUnitario.multiply(BigDecimal.valueOf(cantidad));</span>
+
+<span class="fc" id="L121">        InventarioEntity movimiento = InventarioEntity.builder()</span>
+<span class="fc" id="L122">                .productoId(productoId)</span>
+<span class="fc" id="L123">                .cantidad(cantidad)</span>
+<span class="fc" id="L124">                .tipoMovimiento(&quot;SALIDA&quot;)</span>
+<span class="fc" id="L125">                .precioUnitario(precioUnitario)</span>
+<span class="fc" id="L126">                .precioTotal(precioTotal)</span>
+<span class="fc" id="L127">                .build();</span>
+
+<span class="fc" id="L129">        inventarioRepository.save(movimiento);</span>
+
+<span class="fc" id="L131">        int cantidadNueva = cantidadAnterior - cantidad;</span>
+
+<span class="fc" id="L133">        log.info(&quot;Inventario SALIDA - productoId={} nombre={} cantAnterior={} mov={} cantNueva={} precioUnit={} precioTotal={}&quot;,</span>
+<span class="fc" id="L134">                productoId, producto.getNombre(), cantidadAnterior, cantidad, cantidadNueva, precioUnitario, precioTotal);</span>
+
+        // Emitir evento de inventario cambiado
+<span class="fc" id="L137">        InventarioCambiadoEvent event = InventarioCambiadoEvent.builder()</span>
+<span class="fc" id="L138">                .productoId(productoId)</span>
+<span class="fc" id="L139">                .tipoMovimiento(&quot;SALIDA&quot;)</span>
+<span class="fc" id="L140">                .cantidadAnterior(cantidadAnterior)</span>
+<span class="fc" id="L141">                .cantidadMovimiento(cantidad)</span>
+<span class="fc" id="L142">                .cantidadNueva(cantidadNueva)</span>
+<span class="fc" id="L143">                .precioUnitario(precioUnitario)</span>
+<span class="fc" id="L144">                .build();</span>
+
+<span class="fc" id="L146">        eventPublisher.publishEvent(event);</span>
+
+<span class="fc" id="L148">        return cantidadNueva;</span>
+    }
+
+    // ====== CONSULTAR DETALLE (nombre, cantidad, precio unitario, total) ======
+    @Override
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 300))
+    public InventarioDetalleResponse consultarDetalleInventario(Long productoId) throws CustomException {
+        // 1. Info del producto (válida que exista)
+<span class="fc" id="L156">        ProductoResumenDto producto = obtenerProducto(productoId);</span>
+
+        // 2. Saldo actual
+<span class="fc" id="L159">        int saldo = inventarioRepository.obtenerSaldoPorProducto(productoId);</span>
+
+        // 3. Último movimiento (una sola llamada al repo)
+<span class="fc" id="L162">        var ultimoMovimientoOpt = inventarioRepository</span>
+<span class="fc" id="L163">                .findTopByProductoIdOrderByFechaMovimientoDesc(productoId);</span>
+
+<span class="fc" id="L165">        BigDecimal precioUnitario = ultimoMovimientoOpt</span>
+<span class="fc" id="L166">                .map(InventarioEntity::getPrecioUnitario)</span>
+<span class="fc" id="L167">                .orElse(producto.getPrecio());</span>
+
+        // 4. Construir response
+<span class="fc" id="L170">        return InventarioDetalleResponse.builder()</span>
+<span class="fc" id="L171">                .productoId(productoId)</span>
+<span class="fc" id="L172">                .nombreProducto(producto.getNombre())</span>
+<span class="fc" id="L173">                .cantidadDisponible(saldo)</span>
+<span class="fc" id="L174">                .precioUnitario(precioUnitario)</span>
+<span class="fc" id="L175">                .build();</span>
+    }
+
+
+    // ====== Helper para consumir el micro de productos ======
+    private ProductoResumenDto obtenerProducto(Long productoId) throws CustomException {
+        try {
+<span class="fc" id="L182">            ResponseEntity&lt;ApiResponse&gt; response = productosClient.obtenerProducto(productoId);</span>
+
+<span class="pc bpc" id="L184" title="1 of 4 branches missed.">            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {</span>
+<span class="fc" id="L185">                throw new CustomException(&quot;Producto no encontrado en el microservicio de productos&quot;,</span>
+                        HttpStatus.NOT_FOUND);
+            }
+
+<span class="fc" id="L189">            ApiResponse api = response.getBody();</span>
+<span class="fc" id="L190">            Object data = api.getData();</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">            if (!(data instanceof Map&lt;?, ?&gt; map)) {</span>
+<span class="fc" id="L192">                throw new CustomException(&quot;Formato inesperado en respuesta de productos&quot;,</span>
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+<span class="fc" id="L196">            Object idObj = map.get(&quot;id&quot;);</span>
+<span class="fc" id="L197">            Object nombreObj = map.get(&quot;nombre&quot;);</span>
+<span class="fc" id="L198">            Object precioObj = map.get(&quot;precio&quot;);</span>
+
+<span class="pc bpc" id="L200" title="1 of 2 branches missed.">            Long id = idObj != null ? Long.valueOf(idObj.toString()) : productoId;</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">            String nombre = nombreObj != null ? nombreObj.toString() : null;</span>
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">            BigDecimal precio = precioObj != null ? new BigDecimal(precioObj.toString()) : null;</span>
+
+<span class="fc" id="L204">            return ProductoResumenDto.builder()</span>
+<span class="fc" id="L205">                    .id(id)</span>
+<span class="fc" id="L206">                    .nombre(nombre)</span>
+<span class="fc" id="L207">                    .precio(precio)</span>
+<span class="fc" id="L208">                    .build();</span>
+
+<span class="fc" id="L210">        } catch (FeignException.NotFound e) {</span>
+            // El micro de productos devolvió 404
+<span class="fc" id="L212">            log.warn(&quot;Producto no encontrado en productos-ms. productoId={}&quot;, productoId);</span>
+<span class="fc" id="L213">            throw new CustomException(&quot;Producto no encontrado en el microservicio de productos&quot;,</span>
+                    HttpStatus.NOT_FOUND);
+
+<span class="fc" id="L216">        } catch (FeignException.Forbidden e) {</span>
+            // El micro de productos devolvió 403 (normalmente API KEY mala o faltante)
+<span class="fc" id="L218">            log.error(&quot;Acceso prohibido al microservicio de productos. productoId={}&quot;, productoId, e);</span>
+<span class="fc" id="L219">            throw new CustomException(&quot;Acceso prohibido al microservicio de productos&quot;,</span>
+                    HttpStatus.FORBIDDEN);
+
+<span class="fc" id="L222">        } catch (FeignException e) {</span>
+            // Otros errores HTTP (400, 500, etc)
+<span class="fc" id="L224">            log.error(&quot;Error HTTP al comunicarse con productos. status={} productoId={}&quot;,</span>
+<span class="fc" id="L225">                    e.status(), productoId, e);</span>
+<span class="fc" id="L226">            throw new CustomException(&quot;Fallo comunicación con productos&quot;,</span>
+                    HttpStatus.SERVICE_UNAVAILABLE);
+
+<span class="fc" id="L229">        } catch (CustomException e) {</span>
+<span class="fc" id="L230">            throw e;</span>
+
+<span class="fc" id="L232">        } catch (Exception e) {</span>
+<span class="fc" id="L233">            log.error(&quot;Error inesperado al comunicarse con productos para productoId={}&quot;, productoId, e);</span>
+<span class="fc" id="L234">            throw new CustomException(&quot;Fallo comunicación con productos&quot;,</span>
+                    HttpStatus.SERVICE_UNAVAILABLE);
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

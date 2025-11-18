@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.ms.producto_ms.service.impl.ProductoServiceTest
+-------------------------------------------------------------------------------
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.538 s -- in com.ms.producto_ms.service.impl.ProductoServiceTest
