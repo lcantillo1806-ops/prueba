@@ -19,4 +19,4 @@ INSERT INTO public.productos
 VALUES( true, 'producto tres', 'tres', 16000.0, NULL);
 INSERT INTO public.productos
 (activo, descripcion, nombre, precio, imagen_path)
-VALUES(true, 'caja box', 'caja', 250000.0, 'C:\Users\larape\Documents\uploads\01477061-bd96-42e6-bfbd-d54c226a83f4.png');
+VALUES(true, 'caja box', 'caja', 250000.0, NULL);
