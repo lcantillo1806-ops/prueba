@@ -1,29 +1,62 @@
-Este proyecto combina **Maven** para la construcción y **Docker Compose** para el despliegue de la aplicación.
+Este proyecto utiliza Maven para la construcción de microservicios y Docker Compose para el despliegue de los contenedores.
 
----
+------------------------------------------------------------
+🚀 Instrucciones de ejecución
+------------------------------------------------------------
 
-## 🚀 Instrucciones de ejecución
+1) Requisitos previos:
+- Tener Docker Desktop abierto.
+- Tener Node.js y Angular CLI instalados si se levantará el frontend.
 
-1. **Nota: tener docker desktop abierto**
-2. **Ingresar a productos-ms a la carpeta deploy**
-3. **Abrir consola cmd bash en la carpeta deploy**
-4. **Levantar los contenedores con Docker Compose example producto-ms/deploy docker compose up --build**
+------------------------------------------------------------
+2) Levantar el microservicio producto-ms
+------------------------------------------------------------
+
+1. Ingresar al directorio:
+   productos-ms/deploy
+
+2. Abrir una consola CMD o Bash dentro de esa carpeta.
+
+3. Ejecutar Docker Compose:
    docker compose up --build
-5. **Nota esperar a que el contenedor de Prodcutos-ms para ingresar a inventario-ms a la carpeta deploy**
-6. **Abrir consola cmd bash en la carpeta deploy**
-7. **Levantar los contenedores con Docker Compose example inventario-ms/deploy docker compose up --build**
+
+------------------------------------------------------------
+3) Levantar el microservicio inventario-ms
+------------------------------------------------------------
+
+NOTA: Esperar a que el contenedor de producto-ms esté completamente arriba antes de iniciar inventario-ms.
+
+1. Ingresar al directorio:
+   inventario-ms/deploy
+
+2. Abrir una consola CMD o Bash dentro de esa carpeta.
+
+3. Ejecutar Docker Compose:
    docker compose up --build
 
-8. **http://localhost:8080/producto-ms/swagger-ui/index.html#**
-9. **http://localhost:8090/inventario-sm/swagger-ui/index.html#**
+------------------------------------------------------------
+4) Acceso a las APIs (Swagger)
+------------------------------------------------------------
 
-10. **keySecret colocar en el swagger para cosumir servicio**
-    super-secret-key
-11. **para levantar el fronts esperar a que esten arriba los dos contenedores**
-12. **Abrir consola cmd bash en la carpeta raiz y ejecutar este comando**
+Swagger producto-ms:
+http://localhost:8080/producto-ms/swagger-ui/index.html#
 
-ng serve --proxy-config proxy.conf.json
+Swagger inventario-ms:
+http://localhost:8090/inventario-sm/swagger-ui/index.html#
 
-12. **http://localhost:4200/products-admin**
-12. **http://localhost:4200/products**
+KeySecret requerida en Swagger:
+super-secret-key
 
+------------------------------------------------------------
+5) Levantar el frontend
+------------------------------------------------------------
+
+NOTA: Esperar a que los dos microservicios estén ejecutándose.
+
+1. Abrir consola en la carpeta raíz del frontend.
+2. Ejecutar:
+   ng serve --proxy-config proxy.conf.json
+
+Frontend disponible en:
+http://localhost:4200/products-admin
+http://localhost:4200/products
