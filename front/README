@@ -1,0 +1,9 @@
+Este proyecto combina **Maven** para la construcción y **Docker Compose** para el despliegue de la aplicación.
+
+---
+
+## 🚀 Instrucciones de ejecución
+
+1. ng serve --proxy-config proxy.conf.json
+
+

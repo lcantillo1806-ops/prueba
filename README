@@ -24,3 +24,6 @@ Este proyecto combina **Maven** para la construcción y **Docker Compose** para 
 
 ng serve --proxy-config proxy.conf.json
 
+12. **http://localhost:4200/products-admin**
+12. **http://localhost:4200/products**
+

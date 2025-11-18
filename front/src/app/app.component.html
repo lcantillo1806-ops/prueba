@@ -1,0 +1,27 @@
+<div class="min-h-screen flex flex-col">
+
+  <header class="sticky top-0 z-30 w-full px-6 pt-4 pb-3 sticky-title" [class.scrolled]="hasScrolled">
+    <nav class="mb-2 flex items-center gap-4 text-sm font-medium text-slate-700">
+      <a routerLink="/products-admin" routerLinkActive="text-sky-600 font-semibold"
+        class="hover:text-sky-600 transition-colors">
+        Admin productos
+      </a>
+      <span class="text-slate-300">|</span>
+      <a routerLink="/products" routerLinkActive="text-sky-600 font-semibold"
+        [routerLinkActiveOptions]="{ exact: true }" class="hover:text-sky-600 transition-colors">
+        Listado de productos
+      </a>
+    </nav>
+
+    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+      Gestión de productos
+    </h1>
+  </header>
+
+  <div class="page-scroll">
+    <main class="container pt-6">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+</div>

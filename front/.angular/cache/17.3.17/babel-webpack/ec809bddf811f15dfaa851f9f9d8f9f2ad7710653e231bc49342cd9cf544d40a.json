@@ -1,0 +1,1 @@
+{"ast":null,"code":"export class EndPoints {\n  static uriMicroServicio(microservicio, endpoint) {\n    const newEnvironment = `/`;\n    return newEnvironment.concat(microservicio.route) + endpoint;\n  }\n}","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}
